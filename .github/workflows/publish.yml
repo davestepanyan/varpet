@@ -116,6 +116,23 @@ jobs:
 
           echo "Updated all package.json files to version ${VERSION}"
 
+      - name: Debug npm auth
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          echo "=== .npmrc files ==="
+          find "$GITHUB_WORKSPACE" -name ".npmrc" -maxdepth 2 2>/dev/null
+          echo "--- repo root .npmrc ---"
+          cat "$GITHUB_WORKSPACE/.npmrc" 2>/dev/null || echo "NOT FOUND"
+          echo "--- home .npmrc ---"
+          cat ~/.npmrc 2>/dev/null || echo "NOT FOUND"
+          echo "=== npm config ==="
+          npm config list
+          echo "=== npm whoami ==="
+          npm whoami 2>&1 || echo "whoami FAILED (auth not working)"
+          echo "=== NODE_AUTH_TOKEN set? ==="
+          if [ -n "$NODE_AUTH_TOKEN" ]; then echo "YES (length: ${#NODE_AUTH_TOKEN})"; else echo "NO - EMPTY OR NOT SET"; fi
+
       - name: Publish platform packages
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -123,9 +140,7 @@ jobs:
           for pkg_dir in npm/varpet-*/; do
             pkg_name=$(node -p "require('./${pkg_dir}package.json').name")
             echo "Publishing ${pkg_name}..."
-            cd "${pkg_dir}"
-            npm publish --access public --no-git-checks
-            cd "$GITHUB_WORKSPACE"
+            npm publish "./${pkg_dir}" --access public --no-git-checks
             echo "${pkg_name} published successfully"
             echo "---"
           done
