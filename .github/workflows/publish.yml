@@ -132,8 +132,9 @@ jobs:
             echo "Publishing ${pkg_name} from ${pkg_dir}..."
 
             # Create isolated .npmrc inside each package directory
-            echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > "${pkg_dir}.npmrc"
-            echo "@varpet:registry=https://registry.npmjs.org/" >> "${pkg_dir}.npmrc"
+            # Use single quotes so npm expands ${NODE_AUTH_TOKEN} at runtime from env
+            echo '//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}' > "${pkg_dir}.npmrc"
+            echo '@varpet:registry=https://registry.npmjs.org/' >> "${pkg_dir}.npmrc"
 
             # Publish from inside the directory
             (cd "${pkg_dir}" && npm publish --access public --no-git-checks)
@@ -151,8 +152,9 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           # Create isolated .npmrc for the main package
-          echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > .npmrc
-          echo "@varpet:registry=https://registry.npmjs.org/" >> .npmrc
+          # Use single quotes so npm expands ${NODE_AUTH_TOKEN} at runtime from env
+          echo '//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}' > .npmrc
+          echo '@varpet:registry=https://registry.npmjs.org/' >> .npmrc
 
           npm publish --access public --no-git-checks
 
