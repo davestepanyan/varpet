@@ -30,13 +30,6 @@ jobs:
           registry-url: "https://registry.npmjs.org"
           scope: "@varpet"
 
-      - name: Configure npm registry
-        run: |
-          npm config set @varpet:registry https://registry.npmjs.org/
-          npm config set //registry.npmjs.org/:_authToken ${{ secrets.NPM_TOKEN }}
-          echo "npm config:"
-          npm config list
-
       - name: Determine version
         id: version
         run: |
@@ -129,16 +122,10 @@ jobs:
         run: |
           for pkg_dir in npm/varpet-*/; do
             pkg_name=$(node -p "require('./${pkg_dir}package.json').name")
-            echo "Publishing ${pkg_name} from ${pkg_dir}..."
-
-            # Create isolated .npmrc inside each package directory
-            # Use single quotes so npm expands ${NODE_AUTH_TOKEN} at runtime from env
-            echo '//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}' > "${pkg_dir}.npmrc"
-            echo '@varpet:registry=https://registry.npmjs.org/' >> "${pkg_dir}.npmrc"
-
-            # Publish from inside the directory
-            (cd "${pkg_dir}" && npm publish --access public --no-git-checks)
-
+            echo "Publishing ${pkg_name}..."
+            cd "${pkg_dir}"
+            npm publish --access public --no-git-checks
+            cd "$GITHUB_WORKSPACE"
             echo "${pkg_name} published successfully"
             echo "---"
           done
@@ -150,13 +137,7 @@ jobs:
       - name: Publish varpet (main package)
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          # Create isolated .npmrc for the main package
-          # Use single quotes so npm expands ${NODE_AUTH_TOKEN} at runtime from env
-          echo '//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}' > .npmrc
-          echo '@varpet:registry=https://registry.npmjs.org/' >> .npmrc
-
-          npm publish --access public --no-git-checks
+        run: npm publish --access public --no-git-checks
 
       - name: Verify installation
         run: |
