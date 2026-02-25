@@ -28,6 +28,14 @@ jobs:
         with:
           node-version: "20"
           registry-url: "https://registry.npmjs.org"
+          scope: "@varpet"
+
+      - name: Configure npm registry
+        run: |
+          npm config set @varpet:registry https://registry.npmjs.org/
+          npm config set //registry.npmjs.org/:_authToken ${{ secrets.NPM_TOKEN }}
+          echo "npm config:"
+          npm config list
 
       - name: Determine version
         id: version
