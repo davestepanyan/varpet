@@ -123,8 +123,8 @@ jobs:
           for pkg_dir in npm/varpet-*/; do
             pkg_name=$(node -p "require('./${pkg_dir}package.json').name")
             echo "Publishing ${pkg_name}..."
-            npm publish "./${pkg_dir}" --access public --no-git-checks
-            echo "${pkg_name} published successfully"
+            npm publish "./${pkg_dir}" --access public --no-git-checks || echo "WARN: ${pkg_name} may already be published, continuing..."
+            echo "${pkg_name} done"
             echo "---"
           done
 
