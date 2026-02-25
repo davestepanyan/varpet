@@ -1,0 +1,20 @@
+{
+  "name": "@varpet/win32-x64",
+  "version": "0.1.0",
+  "description": "Varpet binary for Windows x64",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/davestepanyan/varpet"
+  },
+  "os": ["win32"],
+  "cpu": ["x64"],
+  "preferUnplugged": true,
+  "files": [
+    "bin/",
+    "package.json"
+  ],
+  "bin": {
+    "varpet": "./bin/varpet.exe"
+  }
+}

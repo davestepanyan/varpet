@@ -1,0 +1,44 @@
+{
+  "name": "varpet",
+  "version": "0.1.0",
+  "description": "Autonomous bug-fixing agent — reads Jira tickets, analyzes repos, applies minimal patches, creates PRs",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/davestepanyan/varpet"
+  },
+  "homepage": "https://github.com/davestepanyan/varpet#readme",
+  "bugs": {
+    "url": "https://github.com/davestepanyan/varpet/issues"
+  },
+  "keywords": [
+    "agent",
+    "bug-fix",
+    "jira",
+    "automation",
+    "llm",
+    "ai",
+    "code-review",
+    "pull-request"
+  ],
+  "bin": {
+    "varpet": "./bin/varpet.js"
+  },
+  "scripts": {
+    "postinstall": "node scripts/install.js"
+  },
+  "optionalDependencies": {
+    "@varpet/darwin-arm64": "0.1.0",
+    "@varpet/darwin-x64": "0.1.0",
+    "@varpet/linux-x64": "0.1.0",
+    "@varpet/win32-x64": "0.1.0"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "files": [
+    "bin/",
+    "scripts/",
+    "LICENSE"
+  ]
+}

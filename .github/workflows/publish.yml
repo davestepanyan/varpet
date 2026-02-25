@@ -1,0 +1,150 @@
+name: Publish to npm
+
+on:
+  # Triggered automatically by varpet-core release workflow
+  repository_dispatch:
+    types: [release]
+
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (e.g., v0.1.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: Publish npm packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            VERSION="${{ github.event.client_payload.version }}"
+          else
+            VERSION="${{ github.event.inputs.version }}"
+          fi
+          # Strip leading 'v' if present
+          VERSION="${VERSION#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Publishing version: $VERSION"
+
+      - name: Download binaries from varpet-core release
+        env:
+          GH_TOKEN: ${{ secrets.VARPET_CORE_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          echo "Downloading binaries for v${VERSION}..."
+
+          # Download each platform binary
+          for platform in darwin-arm64 darwin-x64 linux-x64; do
+            echo "Downloading varpet-${platform}.tar.gz..."
+            gh release download "v${VERSION}" \
+              --repo davestepanyan/varpet-core \
+              --pattern "varpet-${platform}.tar.gz" \
+              --dir /tmp/downloads
+          done
+
+          # Windows uses .zip
+          echo "Downloading varpet-win32-x64.zip..."
+          gh release download "v${VERSION}" \
+            --repo davestepanyan/varpet-core \
+            --pattern "varpet-win32-x64.zip" \
+            --dir /tmp/downloads
+
+          echo "Downloads complete:"
+          ls -la /tmp/downloads/
+
+      - name: Extract and place binaries
+        run: |
+          # Unix platforms
+          for platform in darwin-arm64 darwin-x64 linux-x64; do
+            echo "Extracting varpet-${platform}..."
+            tar -xzf "/tmp/downloads/varpet-${platform}.tar.gz" \
+              -C "npm/varpet-${platform}/bin/"
+            chmod +x "npm/varpet-${platform}/bin/varpet"
+          done
+
+          # Windows
+          echo "Extracting varpet-win32-x64..."
+          unzip -o "/tmp/downloads/varpet-win32-x64.zip" \
+            -d "npm/varpet-win32-x64/bin/"
+
+          echo "Binaries placed:"
+          find npm/ -name "varpet*" -type f | sort
+
+      - name: Update versions in all package.json files
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          # Update main package.json
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            pkg.version = '${VERSION}';
+            // Update optionalDependencies versions
+            for (const dep in pkg.optionalDependencies) {
+              pkg.optionalDependencies[dep] = '${VERSION}';
+            }
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+
+          # Update platform package.json files
+          for dir in npm/varpet-*/; do
+            node -e "
+              const fs = require('fs');
+              const pkg = JSON.parse(fs.readFileSync('${dir}package.json', 'utf8'));
+              pkg.version = '${VERSION}';
+              fs.writeFileSync('${dir}package.json', JSON.stringify(pkg, null, 2) + '\n');
+            "
+          done
+
+          echo "Updated all package.json files to version ${VERSION}"
+
+      - name: Publish @varpet/darwin-arm64
+        run: npm publish npm/varpet-darwin-arm64 --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @varpet/darwin-x64
+        run: npm publish npm/varpet-darwin-x64 --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @varpet/linux-x64
+        run: npm publish npm/varpet-linux-x64 --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @varpet/win32-x64
+        run: npm publish npm/varpet-win32-x64 --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Wait a moment for npm registry to propagate platform packages
+      - name: Wait for npm propagation
+        run: sleep 15
+
+      - name: Publish varpet (main package)
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Verify installation
+        run: |
+          npm install -g varpet@${{ steps.version.outputs.version }}
+          varpet --version

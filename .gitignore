@@ -1,0 +1,14 @@
+node_modules/
+*.tgz
+
+# Platform binaries (injected by CI, not committed)
+npm/varpet-*/bin/varpet
+npm/varpet-*/bin/varpet.exe
+
+# Local fallback binaries
+bin/varpet-*
+!bin/varpet.js
+
+# OS files
+.DS_Store
+Thumbs.db

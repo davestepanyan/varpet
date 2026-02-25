@@ -1,0 +1,11 @@
+# CI/CD
+.github/
+
+# Platform package sources (published separately)
+npm/
+
+# Development files
+.gitignore
+.env*
+*.md
+!LICENSE
