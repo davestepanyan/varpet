@@ -123,34 +123,38 @@ jobs:
 
           echo "Updated all package.json files to version ${VERSION}"
 
-      - name: Publish @varpet/darwin-arm64
-        run: npm publish npm/varpet-darwin-arm64 --access public --no-git-checks
+      - name: Publish platform packages
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          for pkg_dir in npm/varpet-*/; do
+            pkg_name=$(node -p "require('./${pkg_dir}package.json').name")
+            echo "Publishing ${pkg_name} from ${pkg_dir}..."
 
-      - name: Publish @varpet/darwin-x64
-        run: npm publish npm/varpet-darwin-x64 --access public --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+            # Create isolated .npmrc inside each package directory
+            echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > "${pkg_dir}.npmrc"
+            echo "@varpet:registry=https://registry.npmjs.org/" >> "${pkg_dir}.npmrc"
 
-      - name: Publish @varpet/linux-x64
-        run: npm publish npm/varpet-linux-x64 --access public --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+            # Publish from inside the directory
+            (cd "${pkg_dir}" && npm publish --access public --no-git-checks)
 
-      - name: Publish @varpet/win32-x64
-        run: npm publish npm/varpet-win32-x64 --access public --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+            echo "${pkg_name} published successfully"
+            echo "---"
+          done
 
-      # Wait a moment for npm registry to propagate platform packages
+      # Wait for npm registry to propagate platform packages
       - name: Wait for npm propagation
         run: sleep 15
 
       - name: Publish varpet (main package)
-        run: npm publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          # Create isolated .npmrc for the main package
+          echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > .npmrc
+          echo "@varpet:registry=https://registry.npmjs.org/" >> .npmrc
+
+          npm publish --access public --no-git-checks
 
       - name: Verify installation
         run: |
