@@ -116,22 +116,22 @@ jobs:
           echo "Updated all package.json files to version ${VERSION}"
 
       - name: Publish @varpet/darwin-arm64
-        run: npm publish npm/varpet-darwin-arm64 --access public
+        run: npm publish npm/varpet-darwin-arm64 --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @varpet/darwin-x64
-        run: npm publish npm/varpet-darwin-x64 --access public
+        run: npm publish npm/varpet-darwin-x64 --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @varpet/linux-x64
-        run: npm publish npm/varpet-linux-x64 --access public
+        run: npm publish npm/varpet-linux-x64 --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @varpet/win32-x64
-        run: npm publish npm/varpet-win32-x64 --access public
+        run: npm publish npm/varpet-win32-x64 --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -140,7 +140,7 @@ jobs:
         run: sleep 15
 
       - name: Publish varpet (main package)
-        run: npm publish --access public
+        run: npm publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
